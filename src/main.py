@@ -37,3 +37,12 @@
 #     view.resize(800, 600)
 #     view.show()
 #     sys.exit(app.exec())
+from PySide6.QtWidgets import QApplication
+from view.dashboard_view import DashboardView
+import sys
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = DashboardView(user_id=1)  # Remplace 1 par l'ID utilisateur voulu
+    window.show()
+    sys.exit(app.exec())

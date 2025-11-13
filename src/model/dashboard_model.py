@@ -1,19 +1,44 @@
+from model.transactions_model import Transaction
+from model.budget_model import Budget
+from model.category_model import Category
+
 class DashboardModel:
-    def __init__(self):
-        self.income = 5742.29
-        self.expense = 3461.28
-        self.budget = 224.91
+    def __init__(self, user_id = 1):
+        self.user_id = user_id
+        self.transaction_model = Transaction()
+        self.budget_model = Budget()
+        self.category_model = Category()
+        self.refresh_data()
+
+    def refresh_data(self):
+        transactions = self.transaction_model.get_all_transactions()
+        self.income = sum(t[1] for t in transactions if t[5] == "income" and t[6] == self.user_id)
+        self.expense = sum(t[1] for t in transactions if t[5] == "expense" and t[6] == self.user_id)
+        
+        budgets = self.budget_model.get_budgets()
+        self.budget = sum(b[1] for b in budgets if b[2] is None or b[2] == self.user_id)
+
         self.net_worth = {
-            "today": 523021.63,
-            "retirement": 3172937.61,
-            "life_expectancy": 18632936.52
+            "today": self.income - self.expense,
+            "retirement": (self.income - self.expense) * 10,
+            "life_expectancy": (self.income - self.expense) * 20
         }
+
         self.goals = [
-            {"label": "Retirement", "amount": 2385785.71},
-            {"label": "John's Education", "amount": 889526.71},
-            {"label": "New House", "amount": 392022.60}
+            {"label": "Épargne retraite", "amount": 10000},
+            {"label": "Vacances", "amount": 2000}
         ]
-        self.expense_tags = [
-            {"tag": "Rent", "amount": 1423.21, "percent": 41.12},
-            # Ajoute d'autres catégories ici
-        ]
+
+        categories = self.category_model.get_all_category()
+        total_expense = self.expense if self.expense > 0 else 1
+        self.expense_tags = []
+        for cat in categories:
+            cat_expense = sum(
+                t[1] for t in transactions if t[2] == cat[0] and t[5] == "expense" and t[6] == self.user_id
+            )
+            percent = round((cat_expense / total_expense) * 100, 2)
+            self.expense_tags.append({
+                "tag": cat[1],
+                "amount": cat_expense,
+                "percent": percent
+            })
