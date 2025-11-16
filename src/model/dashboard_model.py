@@ -12,9 +12,8 @@ class DashboardModel:
 
     def refresh_data(self):
         transactions = self.transaction_model.get_all_transactions()
-        self.income = sum(t[1] for t in transactions if t[5] == "income" and t[6] == self.user_id)
-        self.expense = sum(t[1] for t in transactions if t[5] == "expense" and t[6] == self.user_id)
-        
+        self.income = sum(t[1] for t in transactions if t[5] == "revenu" and t[6] == self.user_id)
+        self.expense = sum(t[1] for t in transactions if t[5] == "dépense" and t[6] == self.user_id)
         budgets = self.budget_model.get_budgets()
         self.budget = sum(b[1] for b in budgets if b[2] is None or b[2] == self.user_id)
 
@@ -34,7 +33,7 @@ class DashboardModel:
         self.expense_tags = []
         for cat in categories:
             cat_expense = sum(
-                t[1] for t in transactions if t[2] == cat[0] and t[5] == "expense" and t[6] == self.user_id
+                t[1] for t in transactions if t[2] == cat[0] and t[5] == "dépense" and t[6] == self.user_id
             )
             percent = round((cat_expense / total_expense) * 100, 2)
             self.expense_tags.append({

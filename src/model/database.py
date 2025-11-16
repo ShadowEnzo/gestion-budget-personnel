@@ -2,7 +2,7 @@ import sqlite3 as sq
 conn = sq.connect("gestion_budget_personnel.db")
 c = conn.cursor()
 c.execute("""CREATE TABLE if not exists users (
-          id INTEGER PRIMARY kEY AUTOINCREMENT,
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
           username TEXT UNIQUE NOT NULL,
           password TEXT NOT NULL
 )""")

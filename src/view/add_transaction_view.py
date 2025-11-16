@@ -40,11 +40,11 @@ class AddTransactionView(QWidget):
         self.setLayout(layout)
 
     def submit_transaction(self):
-        montant = self.amount_input.text()
-        categorie = self.category_input.currentText()
-        date = self.date_input.date().toString("yyyy-MM-dd")
-        type_ = self.type_input.currentText()
-        description = self.desc_input.text()
+        # Cette méthode n'est plus utilisée, la logique est gérée par le controller
+        pass
 
-        # Ici, tu peux ajouter la logique pour envoyer ces données au contrôleur
-        QMessageBox.information(self, "Succès", "Transaction ajoutée !")
+    def show_success(self, message):
+        QMessageBox.information(self, "Succès", message)
+
+    def show_error(self, message):
+        QMessageBox.warning(self, "Erreur", message)

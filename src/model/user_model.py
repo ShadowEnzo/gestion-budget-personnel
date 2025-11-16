@@ -1,4 +1,6 @@
-from database import get_connection
+
+from .database import get_connection
+import bcrypt
 
 class User:
     def __init__(self):
@@ -18,9 +20,10 @@ class User:
 
     def create_user(self, username, password):
         cursor = self.conn.cursor()
+        hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         cursor.execute("""
             INSERT INTO users (username, password) VALUES (?, ?)
-""", (username, password))
+        """, (username, hashed))
         self.conn.commit()
           
 # if __name__ == "__main__":
@@ -37,8 +40,16 @@ class User:
         cursor = self.conn.cursor()
         cursor.execute("""
             SELECT * FROM users  WHERE username = ?
-""", (username,))
+        """, (username,))
         return cursor.fetchone()
+
+    def verify_password(self, username, password):
+        user = self.read_user(username)
+        if user:
+            hashed = user[2]
+            if bcrypt.checkpw(password.encode('utf-8'), hashed):
+                return user
+        return None
     
 # if __name__ == "__main__":
 #     user = User()
