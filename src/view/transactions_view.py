@@ -18,6 +18,8 @@ class TransactionsView(QtWidgets.QWidget):
             "ID", "Montant", "Catégorie", "Date", "Libellé", "Type"
         ])
         self.table.horizontalHeader().setStretchLastSection(True)
+        # Ajuste la largeur de la colonne Catégorie pour afficher le texte en entier
+        self.table.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
 
         # Boutons d'action
         self.add_btn = QtWidgets.QPushButton("Ajouter")
@@ -44,6 +46,9 @@ class TransactionsView(QtWidgets.QWidget):
         # Les connexions pour ajouter/modifier peuvent pointer vers des dialogues/formulaires
 
     def load_transactions(self):
+        from model.category_model import Category
+        categories = Category().get_all_category()
+        category_id_to_name = {cat[0]: cat[1] for cat in categories}
         transactions = self.model.get_all_transactions()
         self.table.setRowCount(0)
         for t in transactions:
@@ -51,7 +56,12 @@ class TransactionsView(QtWidgets.QWidget):
                 row = self.table.rowCount()
                 self.table.insertRow(row)
                 for col, value in enumerate(t):
-                    self.table.setItem(row, col, QtWidgets.QTableWidgetItem(str(value)))
+                    # Colonne 2 = catégorie (index 2)
+                    if col == 2:
+                        cat_name = category_id_to_name.get(value, str(value))
+                        self.table.setItem(row, col, QtWidgets.QTableWidgetItem(cat_name))
+                    else:
+                        self.table.setItem(row, col, QtWidgets.QTableWidgetItem(str(value)))
 
     def delete_transaction(self):
         selected = self.table.currentRow()

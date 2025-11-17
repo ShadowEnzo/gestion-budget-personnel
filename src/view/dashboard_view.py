@@ -55,6 +55,8 @@ class DashboardView(QtWidgets.QWidget):
         self.transactions_table.setColumnCount(5)
         self.transactions_table.setHorizontalHeaderLabels(["Montant", "Catégorie", "Date", "Libellé", "Type"])
         self.transactions_table.horizontalHeader().setStretchLastSection(True)
+        # Ajuste la largeur de la colonne Catégorie pour afficher le texte en entier
+        self.transactions_table.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
         self.category_list = QtWidgets.QListWidget()
         self.refresh_btn = QtWidgets.QPushButton("Rafraîchir")
         self.refresh_btn.clicked.connect(self.refresh_view)
@@ -122,13 +124,20 @@ class DashboardView(QtWidgets.QWidget):
         self.category_list.clear()
         for tag in self.model.expense_tags:
             self.category_list.addItem(f"{tag['tag']} : {tag['amount']:.2f} € ({tag['percent']}%)")
+
+        # Création d'un mapping id -> nom de catégorie
+        categories = self.model.category_model.get_all_category()
+        category_id_to_name = {cat[0]: cat[1] for cat in categories}
+
         transactions = self.model.transaction_model.get_all_transactions()
         self.transactions_table.setRowCount(0)
         for t in transactions[-10:][::-1]:
             row = self.transactions_table.rowCount()
             self.transactions_table.insertRow(row)
             self.transactions_table.setItem(row, 0, QtWidgets.QTableWidgetItem(str(t[1])))
-            self.transactions_table.setItem(row, 1, QtWidgets.QTableWidgetItem(str(t[2])))
+            # Remplacer l'ID par le nom de la catégorie
+            cat_name = category_id_to_name.get(t[2], str(t[2]))
+            self.transactions_table.setItem(row, 1, QtWidgets.QTableWidgetItem(cat_name))
             self.transactions_table.setItem(row, 2, QtWidgets.QTableWidgetItem(str(t[3])))
             self.transactions_table.setItem(row, 3, QtWidgets.QTableWidgetItem(str(t[4])))
             self.transactions_table.setItem(row, 4, QtWidgets.QTableWidgetItem(str(t[5])))

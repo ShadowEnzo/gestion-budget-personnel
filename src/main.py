@@ -77,7 +77,9 @@ class MainWindow(QMainWindow):
         self.signup_view.signup_btn.clicked.connect(self.handle_signup)
         self.signup_view.login_btn.clicked.connect(self.show_login)
         self.login_view.login_btn.clicked.connect(self.handle_login)
-        self.login_view.signup_btn.clicked.connect(self.show_signup)
+        # Connecte le bouton 'S'inscrire' de LoginView à show_signup
+        if hasattr(self.login_view, 'switch_to_signup'):
+            self.login_view.switch_to_signup.connect(self.show_signup)
 
         if self.any_user_exists():
             self.show_login()

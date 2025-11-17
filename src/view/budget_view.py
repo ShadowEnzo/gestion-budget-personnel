@@ -15,6 +15,7 @@ class BudgetView(QWidget):
         self.layout.addWidget(self.title)
 
         self.budget_list = QListWidget()
+        self.budget_list.setMinimumWidth(350)  # Largeur plus grande pour éviter la coupure
         self.layout.addWidget(self.budget_list)
 
         # Formulaire d'ajout de budget
@@ -33,12 +34,19 @@ class BudgetView(QWidget):
         self.refresh_budgets()
 
     def refresh_budgets(self):
+        from model.category_model import Category
+        categories = Category().get_all_category()
+        category_id_to_name = {cat[0]: cat[1] for cat in categories}
         self.budget_list.clear()
         budgets = self.budget_model.get_budgets()
         for budget in budgets:
             # budget: (id, amount, category_id, user_id)
             if budget[3] is None or budget[3] == self.user_id:
-                self.budget_list.addItem(f"Montant: {budget[1]} | Catégorie: {budget[2]}")
+                cat_name = category_id_to_name.get(budget[2], str(budget[2]))
+                text = f"Montant: {budget[1]} | Catégorie: {cat_name}"
+                item = self.budget_list.addItem(text)
+                # Ajoute un tooltip pour voir le texte complet si coupé
+                self.budget_list.item(self.budget_list.count()-1).setToolTip(text)
 
     def add_budget(self):
         try:

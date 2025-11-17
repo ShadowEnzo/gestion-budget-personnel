@@ -1,5 +1,6 @@
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QComboBox, QLineEdit, QMessageBox
+from PySide6.QtWidgets import QHeaderView
 from model.budget_model import Budget
 from model.category_model import Category
 
@@ -21,6 +22,8 @@ class BudgetsView(QWidget):
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(["ID", "Montant", "Catégorie", "Utilisateur"])
         self.table.horizontalHeader().setStretchLastSection(True)
+        # Ajuste la largeur de la colonne Catégorie pour afficher le texte en entier
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         layout.addWidget(self.table)
 
         # Formulaire d'ajout/modif
@@ -67,7 +70,9 @@ class BudgetsView(QWidget):
                 # Affiche le nom de la catégorie au lieu de l'ID
                 cat_row = self.category_model.get_category_by_id(b[2])
                 cat_name = cat_row[1] if cat_row else str(b[2])
-                self.table.setItem(row, 2, QTableWidgetItem(cat_name))
+                item = QTableWidgetItem(cat_name)
+                item.setToolTip(cat_name)  # Tooltip pour voir le texte complet si coupé
+                self.table.setItem(row, 2, item)
                 self.table.setItem(row, 3, QTableWidgetItem(str(b[3])))  # Utilisateur
 
     def add_budget(self):
