@@ -19,11 +19,11 @@ class Transaction:
 """, (transaction_id,))
         return cursor.fetchone()
     
-    def get_all_transactions(self):
+    def get_all_transactions(self, user_id):
         cursor = self.conn.cursor()
         cursor.execute("""
-            SELECT * FROM transactions
-""")
+            SELECT * FROM transactions WHERE user_id = ?
+""", (user_id,))
         return cursor.fetchall()
 
     def update_transaction(self, transaction_id, amount, category_id, date, label, type, user_id):

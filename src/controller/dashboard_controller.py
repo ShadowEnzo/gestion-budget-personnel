@@ -75,7 +75,7 @@ class DashboardController:
         # Récupère l'id de la catégorie
         from model.category_model import Category
         cat_model = Category()
-        cat_row = cat_model.get_category_by_name(categorie)
+        cat_row = cat_model.get_category_by_name(categorie, self.user_id)
         if cat_row:
             category_id = cat_row[0]
         else:

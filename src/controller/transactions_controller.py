@@ -24,7 +24,7 @@ class TransactionsController:
         from view.add_transaction_view import AddTransactionView
         from model.category_model import Category
         from PySide6.QtWidgets import QDialog
-        categories = [cat[1] for cat in Category().get_all_category()]
+        categories = [cat[1] for cat in Category().get_all_category(self.user_id)]
         form = AddTransactionView(categories, parent=self.view)
         # On rend le formulaire modal
         dialog = QDialog(self.view)
@@ -39,7 +39,7 @@ class TransactionsController:
             type_ = form.type_input.currentText().lower()
             description = form.desc_input.text()
             cat_model = Category()
-            cat_row = cat_model.get_category_by_name(categorie)
+            cat_row = cat_model.get_category_by_name(categorie, self.user_id)
             if cat_row:
                 category_id = cat_row[0]
             else:
@@ -78,13 +78,13 @@ class TransactionsController:
         if not transaction:
             return
         # Préparer les catégories
-        categories = [cat[1] for cat in Category().get_all_category()]
+        categories = [cat[1] for cat in Category().get_all_category(self.user_id)]
         form = AddTransactionView(categories, parent=self.view)
         # Pré-remplir le formulaire
         form.amount_input.setText(str(transaction[1]))
         # Sélectionner la bonne catégorie
         cat_model = Category()
-        cat_row = cat_model.get_category_by_id(transaction[2])
+        cat_row = cat_model.get_category_by_id(transaction[2], self.user_id)
         if cat_row:
             idx = form.category_input.findText(cat_row[1])
             if idx >= 0:
@@ -108,7 +108,7 @@ class TransactionsController:
             date = form.date_input.date().toString("yyyy-MM-dd")
             type_ = form.type_input.currentText().lower()
             description = form.desc_input.text()
-            cat_row = cat_model.get_category_by_name(categorie)
+            cat_row = cat_model.get_category_by_name(categorie, self.user_id)
             if cat_row:
                 category_id = cat_row[0]
             else:

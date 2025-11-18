@@ -11,11 +11,11 @@ class DashboardModel:
         self.refresh_data()
 
     def refresh_data(self):
-        transactions = self.transaction_model.get_all_transactions()
-        self.income = sum(t[1] for t in transactions if t[5] == "revenu" and t[6] == self.user_id)
-        self.expense = sum(t[1] for t in transactions if t[5] == "dépense" and t[6] == self.user_id)
-        budgets = self.budget_model.get_budgets()
-        self.budget = sum(b[1] for b in budgets if b[2] is None or b[2] == self.user_id)
+        transactions = self.transaction_model.get_all_transactions(self.user_id)
+        self.income = sum(t[1] for t in transactions if t[5] == "revenu")
+        self.expense = sum(t[1] for t in transactions if t[5] == "dépense")
+        budgets = self.budget_model.get_budgets(self.user_id)
+        self.budget = sum(b[1] for b in budgets)
 
         self.net_worth = {
             "today": self.income - self.expense,
@@ -28,12 +28,12 @@ class DashboardModel:
             {"label": "Vacances", "amount": 2000}
         ]
 
-        categories = self.category_model.get_all_category()
+        categories = self.category_model.get_all_category(self.user_id)
         total_expense = self.expense if self.expense > 0 else 1
         self.expense_tags = []
         for cat in categories:
             cat_expense = sum(
-                t[1] for t in transactions if t[2] == cat[0] and t[5] == "dépense" and t[6] == self.user_id
+                t[1] for t in transactions if t[2] == cat[0] and t[5] == "dépense"
             )
             percent = round((cat_expense / total_expense) * 100, 2)
             self.expense_tags.append({

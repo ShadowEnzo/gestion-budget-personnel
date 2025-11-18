@@ -11,11 +11,11 @@ class Budget:
 """,(amount, category_id, user_id))
         self.conn.commit()
 
-    def get_budgets(self): 
+    def get_budgets(self, user_id): 
         cursor = self.conn.cursor()
         cursor.execute("""
-SELECT * FROM budgets
-""")
+SELECT * FROM budgets WHERE user_id = ?
+""", (user_id,))
         return cursor.fetchall()
     
     def update_budget(self, budget_id, amount = None, category_id=None, user_id=None):

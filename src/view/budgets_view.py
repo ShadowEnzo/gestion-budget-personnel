@@ -71,23 +71,93 @@ class BudgetsView(QWidget):
 
         # Formulaire d'ajout/modif
         form_layout = QHBoxLayout()
+        form_layout.setSpacing(12)
+        form_layout.setContentsMargins(0, 8, 0, 0)
+
+        field_style = """
+            QLineEdit, QComboBox {
+                background: #26324a;
+                color: #eaeaea;
+                border: 1.5px solid #2d3547;
+                border-radius: 12px;
+                padding: 8px 14px;
+                font-size: 15px;
+                font-family: 'Segoe UI', 'Arial', sans-serif;
+                margin-bottom: 0px;
+                transition: border 0.18s, box-shadow 0.18s, background 0.18s;
+            }
+            QLineEdit:focus, QComboBox:focus {
+                border: 2px solid #4fc3f7;
+                background: #232e3a;
+                color: #4fc3f7;
+                box-shadow: 0 0 0 2px #4fc3f733;
+            }
+            QLineEdit:hover, QComboBox:hover {
+                background: #2d3547;
+                color: #81d4fa;
+            }
+            QLineEdit::placeholder {
+                color: #8fa1b3;
+                font-style: italic;
+            }
+        """
+
         self.amount_input = QLineEdit()
         self.amount_input.setPlaceholderText("Montant")
+        self.amount_input.setStyleSheet(field_style)
+        self.amount_input.setMinimumWidth(120)
         form_layout.addWidget(self.amount_input)
 
         self.category_input = QComboBox()
         self.refresh_categories()
+        self.category_input.setStyleSheet(field_style)
+        self.category_input.setMinimumWidth(140)
         form_layout.addWidget(self.category_input)
 
+        btn_style = """
+            QPushButton {
+                background: #26324a;
+                color: #eaeaea;
+                font-weight: 700;
+                font-size: 15px;
+                border-radius: 12px;
+                padding: 8px 24px;
+                border: none;
+                min-width: 90px;
+                margin-left: 4px;
+                margin-right: 0;
+                transition: background 0.18s, color 0.18s, outline 0.18s;
+                outline: none;
+            }
+            QPushButton:hover {
+                background: #4fc3f7;
+                color: #232a36;
+            }
+            QPushButton:pressed {
+                background: #039be5;
+                color: #eaeaea;
+            }
+            QPushButton:focus {
+                outline: 2.5px solid #4fc3f7;
+                outline-offset: 2px;
+            }
+        """
+
         self.add_btn = QPushButton("Ajouter")
+        self.add_btn.setStyleSheet(btn_style)
+        self.add_btn.setCursor(QtCore.Qt.PointingHandCursor)
         self.add_btn.clicked.connect(self.add_budget)
         form_layout.addWidget(self.add_btn)
 
         self.update_btn = QPushButton("Modifier")
+        self.update_btn.setStyleSheet(btn_style)
+        self.update_btn.setCursor(QtCore.Qt.PointingHandCursor)
         self.update_btn.clicked.connect(self.update_budget)
         form_layout.addWidget(self.update_btn)
 
         self.delete_btn = QPushButton("Supprimer")
+        self.delete_btn.setStyleSheet(btn_style)
+        self.delete_btn.setCursor(QtCore.Qt.PointingHandCursor)
         self.delete_btn.clicked.connect(self.delete_budget)
         form_layout.addWidget(self.delete_btn)
 
@@ -96,12 +166,12 @@ class BudgetsView(QWidget):
 
     def refresh_categories(self):
         self.category_input.clear()
-        cats = self.category_model.get_all_category()
+        cats = self.category_model.get_all_category(self.user_id)
         for cat in cats:
             self.category_input.addItem(cat[1], cat[0])
 
     def load_budgets(self):
-        budgets = self.budget_model.get_budgets()
+        budgets = self.budget_model.get_budgets(self.user_id)
         self.table.setRowCount(0)
         from model.user_model import User
         user_model = User()
@@ -123,8 +193,8 @@ class BudgetsView(QWidget):
                 item_montant.setTextAlignment(QtCore.Qt.AlignCenter)
                 self.table.setItem(row, 1, item_montant)
                 # Catégorie
-                cat_row = self.category_model.get_category_by_id(b[2])
-                cat_name = cat_row[1] if cat_row else str(b[2])
+                cat_row = self.category_model.get_category_by_id(b[2], self.user_id)
+                cat_name = cat_row[1] if cat_row else "Catégorie inconnue"
                 item_cat = QTableWidgetItem(cat_name)
                 item_cat.setToolTip(cat_name)
                 item_cat.setTextAlignment(QtCore.Qt.AlignCenter)
