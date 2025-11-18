@@ -141,6 +141,15 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.dashboard_view)
 
     def return_to_login(self):
+        # Vider tous les champs de login
+        self.login_view.username_input.clear()
+        self.login_view.password_input.clear()
+        self.login_view.error_label.setText("")
+        # Vider tous les champs de signup
+        self.signup_view.username_input.clear()
+        self.signup_view.password_input.clear()
+        self.signup_view.confirm_password_input.clear()
+        self.signup_view.error_label.setText("")
         self.show_login()
 
 if __name__ == "__main__":

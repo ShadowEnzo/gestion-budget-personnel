@@ -17,9 +17,41 @@ class TransactionsView(QtWidgets.QWidget):
         self.table.setHorizontalHeaderLabels([
             "ID", "Montant", "Catégorie", "Date", "Libellé", "Type"
         ])
-        self.table.horizontalHeader().setStretchLastSection(True)
-        # Ajuste la largeur de la colonne Catégorie pour afficher le texte en entier
-        self.table.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        header = self.table.horizontalHeader()
+        header.setStretchLastSection(True)
+        # Style moderne et épuré
+        self.table.setStyleSheet('''
+            QTableWidget {
+                background: #20232a;
+                color: #eaeaea;
+                border: 1px solid #232a36;
+                border-radius: 8px;
+                font-size: 15px;
+                gridline-color: #232a36;
+            }
+            QHeaderView::section {
+                background: #232a36;
+                color: #54a0ff;
+                font-weight: bold;
+                border: none;
+                padding: 8px 0;
+            }
+            QTableWidget::item {
+                padding: 6px 10px;
+            }
+            QTableCornerButton::section {
+                background: #232a36;
+                border: none;
+            }
+        ''')
+        # Largeur automatique pour Catégorie et Libellé
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(4, QtWidgets.QHeaderView.Stretch)
+        # Largeur fixe pour ID, Montant, Date, Type
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(5, QtWidgets.QHeaderView.ResizeToContents)
 
         # Boutons d'action
         self.add_btn = QtWidgets.QPushButton("Ajouter")
@@ -55,13 +87,33 @@ class TransactionsView(QtWidgets.QWidget):
             if t[6] == self.user_id:  # Filtrer par utilisateur
                 row = self.table.rowCount()
                 self.table.insertRow(row)
-                for col, value in enumerate(t):
-                    # Colonne 2 = catégorie (index 2)
-                    if col == 2:
-                        cat_name = category_id_to_name.get(value, str(value))
-                        self.table.setItem(row, col, QtWidgets.QTableWidgetItem(cat_name))
-                    else:
-                        self.table.setItem(row, col, QtWidgets.QTableWidgetItem(str(value)))
+                # ID
+                item_id = QtWidgets.QTableWidgetItem(str(t[0]))
+                item_id.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.table.setItem(row, 0, item_id)
+                # Montant
+                item_montant = QtWidgets.QTableWidgetItem(str(t[1]))
+                item_montant.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.table.setItem(row, 1, item_montant)
+                # Catégorie
+                cat_name = category_id_to_name.get(t[2], str(t[2]))
+                item_cat = QtWidgets.QTableWidgetItem(cat_name)
+                item_cat.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.table.setItem(row, 2, item_cat)
+                # Date
+                item_date = QtWidgets.QTableWidgetItem(str(t[3]))
+                item_date.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.table.setItem(row, 3, item_date)
+                # Libellé (spécial : retour à la ligne, tooltip, alignement gauche)
+                item_libelle = QtWidgets.QTableWidgetItem(str(t[4]))
+                item_libelle.setTextAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+                item_libelle.setToolTip(str(t[4]))
+                item_libelle.setFlags(item_libelle.flags() | QtCore.Qt.ItemIsEditable)
+                self.table.setItem(row, 4, item_libelle)
+                # Type
+                item_type = QtWidgets.QTableWidgetItem(str(t[5]))
+                item_type.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.table.setItem(row, 5, item_type)
 
     def delete_transaction(self):
         selected = self.table.currentRow()

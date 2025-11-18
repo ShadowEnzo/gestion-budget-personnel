@@ -22,26 +22,41 @@ class DashboardView(QtWidgets.QWidget):
         sidebar_container.setStyleSheet("")
 
         self.sidebar = QtWidgets.QListWidget()
-        self.sidebar.setMinimumWidth(180)
-        self.sidebar.setMaximumWidth(220)
-        self.sidebar.setStyleSheet("")
+        self.sidebar.setStyleSheet("""
+QListWidget {
+    background: #191b1f;
+    border: none;
+    color: #eaeaea;
+    font-size: 16px;
+    padding: 0;
+}
+QListWidget::item {
+    padding: 16px 0 16px 32px;
+    border: none;
+}
+QListWidget::item:selected {
+    background: #232a36;
+    color: #54a0ff;
+    border-left: 4px solid #54a0ff;
+}
+QListWidget::item:hover {
+    background: #232a36;
+}
+""")
+        self.sidebar.setSpacing(2)
+        self.sidebar.setMinimumWidth(200)
+        self.sidebar.setMaximumWidth(240)
+        self.sidebar.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.sidebar.addItem("Dashboard")
         self.sidebar.addItem("Transactions")
         self.sidebar.addItem("Ajouter une transaction")
         self.sidebar.addItem("Budgets")
         self.sidebar.addItem("Catégories")
-        # Ajout d'un grand espaceur visuel pour pousser l'item en bas
-        for _ in range(10):
-            spacer_item = QtWidgets.QListWidgetItem("")
-            spacer_item.setFlags(QtCore.Qt.NoItemFlags)
-            self.sidebar.addItem(spacer_item)
-        # Ajout de l'item de déconnexion avec icône et style
-        logout_item = QtWidgets.QListWidgetItem("  Se déconnecter")
+        # Ajout direct du bouton de déconnexion juste après les items principaux
+        logout_item = QtWidgets.QListWidgetItem("\u23FB  Se déconnecter")
         font = logout_item.font()
         font.setBold(True)
         logout_item.setFont(font)
-        # Ajout d'une icône unicode (power)
-        logout_item.setText("\u23FB  Se déconnecter")
         self.sidebar.addItem(logout_item)
         self.sidebar.setCurrentRow(0)
         sidebar_layout.addWidget(self.sidebar)
@@ -54,9 +69,40 @@ class DashboardView(QtWidgets.QWidget):
         self.transactions_table = QtWidgets.QTableWidget()
         self.transactions_table.setColumnCount(5)
         self.transactions_table.setHorizontalHeaderLabels(["Montant", "Catégorie", "Date", "Libellé", "Type"])
-        self.transactions_table.horizontalHeader().setStretchLastSection(True)
-        # Ajuste la largeur de la colonne Catégorie pour afficher le texte en entier
-        self.transactions_table.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        header = self.transactions_table.horizontalHeader()
+        header.setStretchLastSection(True)
+        # Style moderne et épuré
+        self.transactions_table.setStyleSheet('''
+            QTableWidget {
+                background: #20232a;
+                color: #eaeaea;
+                border: 1px solid #232a36;
+                border-radius: 8px;
+                font-size: 15px;
+                gridline-color: #232a36;
+            }
+            QHeaderView::section {
+                background: #232a36;
+                color: #54a0ff;
+                font-weight: bold;
+                border: none;
+                padding: 8px 0;
+            }
+            QTableWidget::item {
+                padding: 6px 10px;
+            }
+            QTableCornerButton::section {
+                background: #232a36;
+                border: none;
+            }
+        ''')
+        # Largeur automatique pour Catégorie et Libellé
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+        # Largeur fixe pour Montant, Date, Type
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(4, QtWidgets.QHeaderView.ResizeToContents)
         self.category_list = QtWidgets.QListWidget()
         self.refresh_btn = QtWidgets.QPushButton("Rafraîchir")
         self.refresh_btn.clicked.connect(self.refresh_view)
@@ -98,6 +144,8 @@ class DashboardView(QtWidgets.QWidget):
         # --- PAGE CATEGORIES ---
         from view.category_view import CategoryView
         self.categories_page = CategoryView()
+        # Connecte le signal pour rafraîchir les catégories dans budgets_page
+        self.categories_page.category_added.connect(self.budgets_page.refresh_categories)
 
         # --- STACKED WIDGET ---
         self.stacked_widget = QtWidgets.QStackedWidget()
@@ -130,14 +178,32 @@ class DashboardView(QtWidgets.QWidget):
         category_id_to_name = {cat[0]: cat[1] for cat in categories}
 
         transactions = self.model.transaction_model.get_all_transactions()
+        # Filtrer pour n'afficher que les transactions du user_id courant
+        user_transactions = [t for t in transactions if t[6] == self.user_id]
         self.transactions_table.setRowCount(0)
-        for t in transactions[-10:][::-1]:
+        for t in user_transactions[-10:][::-1]:
             row = self.transactions_table.rowCount()
             self.transactions_table.insertRow(row)
-            self.transactions_table.setItem(row, 0, QtWidgets.QTableWidgetItem(str(t[1])))
-            # Remplacer l'ID par le nom de la catégorie
+            # Montant
+            item_montant = QtWidgets.QTableWidgetItem(str(t[1]))
+            item_montant.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.transactions_table.setItem(row, 0, item_montant)
+            # Catégorie
             cat_name = category_id_to_name.get(t[2], str(t[2]))
-            self.transactions_table.setItem(row, 1, QtWidgets.QTableWidgetItem(cat_name))
-            self.transactions_table.setItem(row, 2, QtWidgets.QTableWidgetItem(str(t[3])))
-            self.transactions_table.setItem(row, 3, QtWidgets.QTableWidgetItem(str(t[4])))
-            self.transactions_table.setItem(row, 4, QtWidgets.QTableWidgetItem(str(t[5])))
+            item_cat = QtWidgets.QTableWidgetItem(cat_name)
+            item_cat.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.transactions_table.setItem(row, 1, item_cat)
+            # Date
+            item_date = QtWidgets.QTableWidgetItem(str(t[3]))
+            item_date.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.transactions_table.setItem(row, 2, item_date)
+            # Libellé (spécial : retour à la ligne, tooltip, alignement gauche)
+            item_libelle = QtWidgets.QTableWidgetItem(str(t[4]))
+            item_libelle.setTextAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+            item_libelle.setToolTip(str(t[4]))
+            item_libelle.setFlags(item_libelle.flags() | QtCore.Qt.ItemIsEditable)
+            self.transactions_table.setItem(row, 3, item_libelle)
+            # Type
+            item_type = QtWidgets.QTableWidgetItem(str(t[5]))
+            item_type.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.transactions_table.setItem(row, 4, item_type)

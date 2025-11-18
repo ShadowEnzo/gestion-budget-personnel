@@ -1,6 +1,7 @@
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QComboBox, QLineEdit, QMessageBox
 from PySide6.QtWidgets import QHeaderView
+from PySide6 import QtCore
 from model.budget_model import Budget
 from model.category_model import Category
 
@@ -13,7 +14,21 @@ class BudgetsView(QWidget):
         self.category_model = Category()
         self.setup_ui()
         self.load_budgets()
+        # Remplit le formulaire lors de la sélection d'une ligne
+        self.table.itemSelectionChanged.connect(self.fill_form_from_selection)
 
+    def fill_form_from_selection(self):
+        selected = self.table.currentRow()
+        if selected < 0:
+            return
+        # Remplit le champ montant
+        montant = self.table.item(selected, 1).text()
+        self.amount_input.setText(montant)
+        # Remplit la catégorie (par nom affiché)
+        cat_name = self.table.item(selected, 2).text()
+        idx = self.category_input.findText(cat_name)
+        if idx >= 0:
+            self.category_input.setCurrentIndex(idx)
     def setup_ui(self):
         layout = QVBoxLayout()
 
@@ -21,9 +36,37 @@ class BudgetsView(QWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(["ID", "Montant", "Catégorie", "Utilisateur"])
-        self.table.horizontalHeader().setStretchLastSection(True)
-        # Ajuste la largeur de la colonne Catégorie pour afficher le texte en entier
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        header = self.table.horizontalHeader()
+        header.setStretchLastSection(True)
+        # Style moderne et épuré
+        self.table.setStyleSheet('''
+            QTableWidget {
+                background: #20232a;
+                color: #eaeaea;
+                border: 1px solid #232a36;
+                border-radius: 8px;
+                font-size: 15px;
+                gridline-color: #232a36;
+            }
+            QHeaderView::section {
+                background: #232a36;
+                color: #54a0ff;
+                font-weight: bold;
+                border: none;
+                padding: 8px 0;
+            }
+            QTableWidget::item {
+                padding: 6px 10px;
+            }
+            QTableCornerButton::section {
+                background: #232a36;
+                border: none;
+            }
+        ''')
+        # Largeur fixe pour ID, même largeur pour les autres colonnes
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        for col in [1, 2, 3]:
+            header.setSectionResizeMode(col, QHeaderView.Stretch)
         layout.addWidget(self.table)
 
         # Formulaire d'ajout/modif
@@ -60,20 +103,37 @@ class BudgetsView(QWidget):
     def load_budgets(self):
         budgets = self.budget_model.get_budgets()
         self.table.setRowCount(0)
+        from model.user_model import User
+        user_model = User()
+        # Récupère tous les utilisateurs (id -> username)
+        cursor = user_model.conn.cursor()
+        cursor.execute("SELECT id, username FROM users")
+        user_map = {row[0]: row[1] for row in cursor.fetchall()}
         for b in budgets:
             # b = (id, amount, category_id, user_id)
             if b[3] == self.user_id:
                 row = self.table.rowCount()
                 self.table.insertRow(row)
-                self.table.setItem(row, 0, QTableWidgetItem(str(b[0])))  # ID
-                self.table.setItem(row, 1, QTableWidgetItem(str(b[1])))  # Montant
-                # Affiche le nom de la catégorie au lieu de l'ID
+                # ID
+                item_id = QTableWidgetItem(str(b[0]))
+                item_id.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.table.setItem(row, 0, item_id)
+                # Montant
+                item_montant = QTableWidgetItem(str(b[1]))
+                item_montant.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.table.setItem(row, 1, item_montant)
+                # Catégorie
                 cat_row = self.category_model.get_category_by_id(b[2])
                 cat_name = cat_row[1] if cat_row else str(b[2])
-                item = QTableWidgetItem(cat_name)
-                item.setToolTip(cat_name)  # Tooltip pour voir le texte complet si coupé
-                self.table.setItem(row, 2, item)
-                self.table.setItem(row, 3, QTableWidgetItem(str(b[3])))  # Utilisateur
+                item_cat = QTableWidgetItem(cat_name)
+                item_cat.setToolTip(cat_name)
+                item_cat.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.table.setItem(row, 2, item_cat)
+                # Utilisateur
+                username = user_map.get(b[3], str(b[3]))
+                item_user = QTableWidgetItem(username)
+                item_user.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.table.setItem(row, 3, item_user)
 
     def add_budget(self):
         try:

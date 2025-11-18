@@ -1,9 +1,11 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QListWidget, QMessageBox
 )
+from PySide6.QtCore import Signal
 from model.category_model import Category
 
 class CategoryView(QWidget):
+    category_added = Signal()
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Gestion des catégories")
@@ -53,6 +55,7 @@ class CategoryView(QWidget):
                 self.category_model.create_category(name)
                 self.input_name.clear()
                 self.refresh_list()
+                self.category_added.emit()
         else:
             QMessageBox.warning(self, "Erreur", "Veuillez entrer un nom de catégorie.")
 

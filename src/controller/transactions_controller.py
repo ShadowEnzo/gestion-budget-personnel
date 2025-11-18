@@ -1,5 +1,6 @@
 
 from PySide6.QtWidgets import QVBoxLayout
+from PySide6 import QtCore
 from model.transactions_model import Transaction
 from view.transactions_view import TransactionsView
 
