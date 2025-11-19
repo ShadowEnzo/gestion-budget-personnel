@@ -6,6 +6,6 @@ import sys
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     categories = ["Alimentation", "Transport", "Loisirs"]  # Exemple de catégories
-    window = AddTransactionView(categories)
+    window = AddTransactionView(categories, user_id=1)  # user_id fictif pour le test
     window.show()
     sys.exit(app.exec())

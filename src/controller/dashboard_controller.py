@@ -106,8 +106,12 @@ class DashboardController:
     def open_transactions_controller(self):
         # Utilise la vue déjà présente dans le stacked widget
         if self.transactions_controller is None:
-            # Passe la vue existante à TransactionsController
-            self.transactions_controller = TransactionsController(self.user_id, self.view.transactions_page)
+            # Passe la vue existante à TransactionsController, et la vue budgets_page pour le rafraîchissement
+            self.transactions_controller = TransactionsController(
+                self.user_id,
+                self.view.transactions_page,
+                self.view.budgets_page
+            )
         self.transactions_controller.refresh_transactions()
 
 

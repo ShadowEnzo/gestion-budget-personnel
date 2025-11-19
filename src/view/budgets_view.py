@@ -34,10 +34,23 @@ class BudgetsView(QWidget):
 
         # Table des budgets
         self.table = QTableWidget()
-        self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["ID", "Montant", "Catégorie", "Utilisateur"])
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["ID", "Montant", "Montant Dépensé", "% Dépense", "Catégorie", "Utilisateur"])
         header = self.table.horizontalHeader()
-        header.setStretchLastSection(True)
+        # Largeur et espacement optimisés pour chaque colonne
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)   # ID
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)   # Montant
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)   # Montant Dépense
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)   # Montant Dépasse
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)   # % Montant Dépense
+        header.setSectionResizeMode(5, QHeaderView.Stretch)            # Catégorie (prend l'espace restant)
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)   # Utilisateur
+        self.table.setHorizontalScrollMode(QTableWidget.ScrollPerPixel)
+        self.table.setVerticalScrollMode(QTableWidget.ScrollPerPixel)
+        self.table.setShowGrid(False)
+        self.table.setAlternatingRowColors(True)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SingleSelection)
         # Style moderne et épuré
         self.table.setStyleSheet('''
             QTableWidget {
@@ -174,11 +187,14 @@ class BudgetsView(QWidget):
         budgets = self.budget_model.get_budgets(self.user_id)
         self.table.setRowCount(0)
         from model.user_model import User
+        from model.transactions_model import Transaction
         user_model = User()
+        transaction_model = Transaction()
         # Récupère tous les utilisateurs (id -> username)
         cursor = user_model.conn.cursor()
         cursor.execute("SELECT id, username FROM users")
         user_map = {row[0]: row[1] for row in cursor.fetchall()}
+        alert_triggered = False
         for b in budgets:
             # b = (id, amount, category_id, user_id)
             if b[3] == self.user_id:
@@ -189,21 +205,40 @@ class BudgetsView(QWidget):
                 item_id.setTextAlignment(QtCore.Qt.AlignCenter)
                 self.table.setItem(row, 0, item_id)
                 # Montant
-                item_montant = QTableWidgetItem(str(b[1]))
+                montant_budget = b[1]
+                item_montant = QTableWidgetItem(str(montant_budget))
                 item_montant.setTextAlignment(QtCore.Qt.AlignCenter)
                 self.table.setItem(row, 1, item_montant)
+                # Montant Dépensé (somme des transactions de type 'dépense' pour cette catégorie et cet utilisateur)
+                transactions = transaction_model.get_all_transactions(self.user_id)
+                montant_depense = sum(t[1] for t in transactions if t[2] == b[2] and t[5] == "dépense")
+                item_montant_depense = QTableWidgetItem(str(montant_depense))
+                item_montant_depense.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.table.setItem(row, 2, item_montant_depense)
+                # % Dépense (dépense / budget * 100)
+                pourcentage = (montant_depense / montant_budget * 100) if montant_budget else 0
+                item_pourcentage = QTableWidgetItem(f"{pourcentage:.1f}%")
+                item_pourcentage.setTextAlignment(QtCore.Qt.AlignCenter)
+                if pourcentage > 100:
+                    item_pourcentage.setBackground(QtCore.Qt.red)
+                    alert_triggered = True
+                self.table.setItem(row, 3, item_pourcentage)
                 # Catégorie
                 cat_row = self.category_model.get_category_by_id(b[2], self.user_id)
                 cat_name = cat_row[1] if cat_row else "Catégorie inconnue"
                 item_cat = QTableWidgetItem(cat_name)
                 item_cat.setToolTip(cat_name)
                 item_cat.setTextAlignment(QtCore.Qt.AlignCenter)
-                self.table.setItem(row, 2, item_cat)
+                self.table.setItem(row, 4, item_cat)
                 # Utilisateur
                 username = user_map.get(b[3], str(b[3]))
                 item_user = QTableWidgetItem(username)
                 item_user.setTextAlignment(QtCore.Qt.AlignCenter)
-                self.table.setItem(row, 3, item_user)
+                self.table.setItem(row, 5, item_user)
+        # Affiche une alerte si au moins un budget est dépassé
+        if alert_triggered:
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Alerte budget", "Alerte : vous avez dépassé votre budget !")
 
     def add_budget(self):
         try:

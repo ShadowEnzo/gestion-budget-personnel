@@ -247,7 +247,7 @@ QListWidget::item:hover {
         from model.category_model import Category
         # Récupère les catégories pour le formulaire
         categories = [cat[1] for cat in Category().get_all_category(self.user_id)]
-        self.add_transaction_page = AddTransactionView(categories)
+        self.add_transaction_page = AddTransactionView(categories, user_id=self.user_id)
 
         # --- PAGE BUDGETS ---
         from view.budgets_view import BudgetsView

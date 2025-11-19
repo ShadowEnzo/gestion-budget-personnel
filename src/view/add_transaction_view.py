@@ -7,8 +7,9 @@ from PySide6.QtCore import QDate
 from PySide6 import QtCore
 
 class AddTransactionView(QWidget):
-    def __init__(self, categories, parent=None):
+    def __init__(self, categories, user_id=None, parent=None):
         super().__init__(parent)
+        self.user_id = user_id
         self.setWindowTitle("Ajouter une transaction")
         self.setMinimumWidth(300)
 

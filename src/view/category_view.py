@@ -201,7 +201,7 @@ class CategoryView(QWidget):
         if self.selected_category_id is None:
             QMessageBox.warning(self, "Erreur", "Sélectionnez une catégorie à supprimer.")
             return
-        self.category_model.delete_category(self.selected_category_id)
+        self.category_model.delete_category(self.selected_category_id, self.user_id)
         self.input_name.clear()
         self.selected_category_id = None
         self.refresh_list()

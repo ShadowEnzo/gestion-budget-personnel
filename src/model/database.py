@@ -7,13 +7,13 @@ c.execute("""CREATE TABLE if not exists users (
           password TEXT NOT NULL
 )""")
 
-# c.execute("""INSERT INTO users (username, password) VALUES (
-#         "Enzo", "enzo123"
-# )""")
 
 c.execute("""CREATE TABLE if not exists categories (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT UNIQUE NOT NULL
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    UNIQUE(name, user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
 )""")
 
 c.execute("""CREATE TABLE if not exists transactions (
@@ -24,8 +24,8 @@ c.execute("""CREATE TABLE if not exists transactions (
           label TEXT,
           type TEXT NOT NULL,
           user_id INTEGER,
-          FOREIGN KEY (category_id) REFERENCEs categories(id),
-          FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (category_id) REFERENCES categories(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
 )""")
 
 c.execute("""CREATE TABLE if not exists budgets(

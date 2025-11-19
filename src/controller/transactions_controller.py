@@ -5,14 +5,16 @@ from model.transactions_model import Transaction
 from view.transactions_view import TransactionsView
 
 class TransactionsController:
-    def __init__(self, user_id, view=None):
+    def __init__(self, user_id, view=None, budgets_view=None):
         self.model = Transaction()
         self.user_id = user_id
-        # Utilise la vue passée ou crée une nouvelle si besoin (fallback)
+        # Vue principale des transactions
         if view is not None:
             self.view = view
         else:
             self.view = TransactionsView(user_id)
+        # Vue budgets (pour rafraîchir dynamiquement)
+        self.budgets_view = budgets_view
 
         # Connexions des boutons à leurs méthodes
         self.view.add_btn.clicked.connect(self.add_transaction)
@@ -25,7 +27,7 @@ class TransactionsController:
         from model.category_model import Category
         from PySide6.QtWidgets import QDialog
         categories = [cat[1] for cat in Category().get_all_category(self.user_id)]
-        form = AddTransactionView(categories, parent=self.view)
+        form = AddTransactionView(categories, user_id=self.user_id, parent=self.view)
         # On rend le formulaire modal
         dialog = QDialog(self.view)
         dialog.setWindowTitle("Ajouter une transaction")
@@ -50,6 +52,31 @@ class TransactionsController:
             except ValueError:
                 form.show_error("Montant invalide")
                 return
+            # Vérifier si la transaction va dépasser le budget
+            depense_excessive = False
+            if type_ == "dépense":
+                from model.budget_model import Budget
+                budget_model = Budget()
+                budgets = budget_model.get_budgets(self.user_id)
+                budget_for_cat = next((b for b in budgets if b[2] == category_id), None)
+                if budget_for_cat:
+                    montant_budget = budget_for_cat[1]
+                    from model.transactions_model import Transaction as TransactionModel
+                    transaction_model = TransactionModel()
+                    transactions = transaction_model.get_all_transactions(self.user_id)
+                    montant_depense = sum(t[1] for t in transactions if t[2] == category_id and t[5] == "dépense")
+                    if montant_depense + montant_float > montant_budget:
+                        depense_excessive = True
+            if depense_excessive:
+                from PySide6.QtWidgets import QMessageBox
+                reply = QMessageBox.question(
+                    form,
+                    "Dépassement de budget",
+                    "Cette dépense va dépasser le budget de la catégorie. Êtes-vous sûr de vouloir continuer ?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply != QMessageBox.Yes:
+                    return
             self.model.create_transaction(
                 amount=montant_float,
                 category_id=category_id,
@@ -58,6 +85,9 @@ class TransactionsController:
                 type=type_,
                 user_id=self.user_id
             )
+            # Rafraîchir la vue budget si elle existe
+            if self.budgets_view is not None:
+                self.budgets_view.load_budgets()
             form.show_success("Transaction ajoutée !")
             dialog.accept()
             self.refresh_transactions()
@@ -128,6 +158,9 @@ class TransactionsController:
                 type=type_,
                 user_id=self.user_id
             )
+            # Rafraîchir la vue budget si elle existe
+            if hasattr(self, 'budgets_view') and self.budgets_view is not None:
+                self.budgets_view.load_budgets()
             form.show_success("Transaction modifiée !")
             dialog.accept()
             self.refresh_transactions()
